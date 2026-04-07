@@ -145,7 +145,7 @@ fig.update_layout(
         titlefont=dict(color="#ffffff", family="Inter"),
         gridcolor="#222222",
         showline=False,
-        tickformat=",",
+        tickformat=",.0f",
     ),
     legend=dict(
         orientation="h",
