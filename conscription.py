@@ -11,38 +11,32 @@ st.markdown("""
     .stApp { background-color: #000000; color: #ffffff; }
     h1, h2, h3, h4 { color: #ffffff !important; }
     .stMarkdown, .stMarkdown p, .stMarkdown li { color: #ffffff !important; }
-    [data-testid="stExpander"] {
+    .stButton > button {
+        background-color: #000000 !important;
+        color: #aaaaaa !important;
         border: 0.5px solid #333333 !important;
         border-radius: 8px !important;
-        background-color: #000000 !important;
-    }
-    [data-testid="stExpander"] summary {
-        color: #ffffff !important;
-        background-color: #000000 !important;
-        list-style: none !important;
-    }
-    [data-testid="stExpander"] summary::-webkit-details-marker { display: none !important; }
-    [data-testid="stExpander"] summary svg { display: none !important; }
-    [data-testid="stExpander"] summary p {
-        font-size: 14px !important;
+        font-size: 13px !important;
         font-weight: 500 !important;
-        color: #aaaaaa !important;
+        padding: 6px 14px !important;
     }
-    [data-testid="stExpanderDetails"] {
-        background-color: #111111 !important;
+    .stButton > button:hover {
+        border-color: #666666 !important;
         color: #ffffff !important;
     }
-    [data-testid="stExpanderDetails"] p,
-    [data-testid="stExpanderDetails"] li,
-    [data-testid="stExpanderDetails"] strong { color: #ffffff !important; }
-    div[data-testid="metric-container"] {
-        background-color: #111111 !important;
-        border: 0.5px solid #222222 !important;
-        border-radius: 8px !important;
-        padding: 12px !important;
+    .info-box {
+        background-color: #111111;
+        border: 0.5px solid #333333;
+        border-radius: 8px;
+        padding: 1.2rem 1.5rem;
+        margin-bottom: 1rem;
     }
-    div[data-testid="metric-container"] label { color: #aaaaaa !important; font-size: 12px !important; }
-    div[data-testid="metric-container"] div { color: #ffffff !important; }
+    .info-box p {
+        color: #ffffff !important;
+        font-size: 13px !important;
+        line-height: 1.7 !important;
+        margin: 0.3rem 0 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -51,105 +45,115 @@ def load_data():
     df = pd.read_csv("Military_emigration_and_conscription_-_Conscription.csv")
     df.columns = ["year", "spring", "autumn", "total"]
     for col in ["spring", "autumn", "total"]:
-        df[col] = pd.to_numeric(df[col].astype(str).str.replace(".", ""), errors="coerce")
+        df[col] = pd.to_numeric(
+            df[col].astype(str).str.replace(".", "", regex=False).str.replace(",", "", regex=False),
+            errors="coerce"
+        )
+    df["year_str"] = df["year"].astype(str)
     return df
 
 df = load_data()
 
 st.title("Russian Military Conscription Quotas")
 st.markdown(
-    "<p style='color:#888888;font-size:13px;margin:-8px 0 16px;'>"
+    "<p style='color:#888888;font-size:13px;margin:-8px 0 12px;'>"
     "Annual conscription quotas in Russia by draft cycle, 2008–2026</p>",
     unsafe_allow_html=True,
 )
 
-with st.expander("About the data"):
-    st.markdown("**What are we looking at?**")
-    st.markdown("This chart shows Russia's annual military conscription quotas — the number of men called up for mandatory military service each year. Russia conducts two conscription cycles per year: a spring draft (April–July) and an autumn draft (October–December).")
-    st.markdown("**Data source**")
-    st.markdown("Data was collected from official Russian presidential decrees on conscription, published annually. Each decree specifies the number of citizens to be called up for that cycle.")
-    st.markdown("**Note on 2026**")
-    st.markdown("The 2026 figure reflects Russia's first year-round conscription system, signed into law in November 2025 and effective January 2026. The figure of 261,000 represents the total planned quota under the new system.")
+if "show_conscription_info" not in st.session_state:
+    st.session_state.show_conscription_info = False
 
-st.markdown("<p style='height:8px'></p>", unsafe_allow_html=True)
+if st.button("About the data", key="conscription_info_btn"):
+    st.session_state.show_conscription_info = not st.session_state.show_conscription_info
 
-col1, col2, col3, col4 = st.columns(4)
-pre_war  = df[df["year"] < 2022]["total"].mean()
-post_war = df[df["year"] >= 2022]["total"].mean()
-peak     = df["total"].max()
-peak_yr  = int(df.loc[df["total"].idxmax(), "year"])
-latest   = int(df[df["year"] == df["year"].max()]["total"].values[0])
+if st.session_state.show_conscription_info:
+    st.markdown("""
+    <div class="info-box">
+        <p><strong>What are we looking at?</strong></p>
+        <p>This chart shows Russia's annual military conscription quotas — the number of men called up for mandatory military service each year. Russia conducts two conscription cycles per year: a spring draft (April–July) and an autumn draft (October–December).</p>
+        <br>
+        <p><strong>Data source</strong></p>
+        <p>Data was collected from official Russian presidential decrees on conscription, published annually. Each decree specifies the number of citizens to be called up for that cycle.</p>
+        <br>
+        <p><strong>Note on 2026</strong></p>
+        <p>The 2026 figure reflects Russia's first year-round conscription system, signed into law in November 2025 and effective January 2026. The figure of 261,000 represents the total planned quota under the new system.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-col1.metric("Average pre-2022", f"{int(pre_war):,}")
-col2.metric("Average 2022–2026", f"{int(post_war):,}")
-col3.metric(f"Peak ({peak_yr})", f"{int(peak):,}")
-col4.metric("Latest quota (2026)", f"{latest:,}")
+st.markdown("<br>", unsafe_allow_html=True)
 
-st.markdown("<p style='height:8px'></p>", unsafe_allow_html=True)
+years  = df["year_str"].tolist()
+spring = df["spring"].tolist()
+autumn = df["autumn"].tolist()
+total  = df["total"].tolist()
 
 fig = go.Figure()
 
 fig.add_trace(go.Bar(
-    x=df["year"], y=df["spring"],
+    x=years, y=spring,
     name="Spring draft",
     marker_color="rgba(0,87,231,0.6)",
-    hovertemplate="<b>%{x}</b><br>Spring draft: %{y:,}<extra></extra>",
+    hovertemplate="<b>%{x}</b><br>Spring draft: %{y:,.0f}<extra></extra>",
 ))
 
 fig.add_trace(go.Bar(
-    x=df["year"], y=df["autumn"],
+    x=years, y=autumn,
     name="Autumn draft",
     marker_color="rgba(0,87,231,0.35)",
-    hovertemplate="<b>%{x}</b><br>Autumn draft: %{y:,}<extra></extra>",
+    hovertemplate="<b>%{x}</b><br>Autumn draft: %{y:,.0f}<extra></extra>",
 ))
 
 fig.add_trace(go.Scatter(
-    x=df["year"], y=df["total"],
+    x=years, y=total,
     name="Total",
     mode="lines+markers",
     line=dict(color="#0057E7", width=2.5),
     marker=dict(size=6, color="#0057E7"),
-    hovertemplate="<b>%{x}</b><br>Total: %{y:,}<extra></extra>",
+    hovertemplate="<b>%{x}</b><br>Total: %{y:,.0f}<extra></extra>",
 ))
 
 fig.add_shape(
-    type="line", x0=2022, x1=2022, y0=0, y1=620000,
+    type="line",
+    x0="2022", x1="2022",
+    y0=0, y1=620000,
     line=dict(color="#aaaaaa", width=1, dash="dot"),
 )
 fig.add_annotation(
-    x=2022, y=620000,
-    text="<b>Full-scale invasion</b>",
-    showarrow=False, yanchor="bottom",
+    x="2022", y=610000,
+    text="Full-scale invasion",
+    showarrow=False,
+    yanchor="bottom",
+    xanchor="left",
+    xshift=6,
     font=dict(size=10, color="#aaaaaa", family="Inter"),
-    bgcolor="rgba(0,0,0,0.7)",
-    bordercolor="#aaaaaa", borderwidth=0.5, borderpad=3,
+    bgcolor="rgba(0,0,0,0)",
 )
 
 fig.update_layout(
     barmode="stack",
     paper_bgcolor="#000000",
     plot_bgcolor="#000000",
-    font=dict(family="Inter", size=13, color="#ffffff"),
+    font=dict(family="Inter", size=12, color="#ffffff"),
     xaxis=dict(
-        title="Year",
-        tickfont=dict(color="#ffffff", family="Inter"),
-        titlefont=dict(color="#ffffff", family="Inter"),
+        title=dict(text="Year", font=dict(color="#ffffff", family="Inter", size=12)),
+        tickfont=dict(color="#ffffff", family="Inter", size=11),
         showgrid=False,
-        dtick=1,
         tickangle=-45,
         showline=False,
+        categoryorder="array",
+        categoryarray=years,
     ),
     yaxis=dict(
-        title="Number of conscripts",
-        tickfont=dict(color="#ffffff", family="Inter"),
-        titlefont=dict(color="#ffffff", family="Inter"),
+        title=dict(text="Number of conscripts", font=dict(color="#ffffff", family="Inter", size=12)),
+        tickfont=dict(color="#ffffff", family="Inter", size=11),
         gridcolor="#222222",
         showline=False,
-        tickformat=",.0f",
+        tickformat=",d",
     ),
     legend=dict(
         orientation="h",
-        yanchor="bottom", y=-0.3,
+        yanchor="bottom", y=-0.28,
         xanchor="center", x=0.5,
         font=dict(size=12, color="#ffffff", family="Inter"),
         bgcolor="rgba(0,0,0,0)",
@@ -160,7 +164,7 @@ fig.update_layout(
         font=dict(color="#ffffff", size=12, family="Inter"),
     ),
     hovermode="x unified",
-    margin=dict(t=20, b=80, l=70, r=20),
+    margin=dict(t=20, b=100, l=70, r=20),
     height=480,
 )
 
@@ -172,3 +176,4 @@ st.markdown(
     "Spring draft: April–July · Autumn draft: October–December</p>",
     unsafe_allow_html=True,
 )
+
