@@ -11,6 +11,9 @@ st.markdown("""
     .stApp { background-color: #000000; color: #ffffff; }
     h1, h2, h3, h4 { color: #ffffff !important; }
     .stMarkdown, .stMarkdown p, .stMarkdown li { color: #ffffff !important; }
+    .block-container { padding: 0rem 2rem !important; margin-top: 0 !important; }
+[data-testid="stAppViewContainer"] { padding-top: 0 !important; }
+[data-testid="stHeader"] { display: none !important; }
     .stButton > button {
         background-color: #000000 !important;
         color: #aaaaaa !important;
@@ -49,14 +52,22 @@ def load_data():
             df[col].astype(str).str.replace(".", "", regex=False).str.replace(",", "", regex=False),
             errors="coerce"
         )
+    df.loc[df["year"] == 2026, "spring"] = 261000
+    df.loc[df["year"] == 2026, "autumn"] = 0
+    df.loc[df["year"] == 2026, "total"]  = 261000
     df["year_str"] = df["year"].astype(str)
     return df
 
 df = load_data()
 
-st.title("Russian Military Conscription Quotas")
+# ── Title ──────────────────────────────────────────────────────────────────
 st.markdown(
-    "<p style='color:#888888;font-size:13px;margin:-8px 0 12px;'>"
+    "<h2 style='font-size:22px;font-weight:600;color:#ffffff;margin:0 0 4px;'>"
+    "How many Russian men were conscripted each year?</h2>",
+    unsafe_allow_html=True,
+)
+st.markdown(
+    "<p style='color:#888888;font-size:12px;margin:0 0 12px;'>"
     "Annual conscription quotas in Russia by draft cycle, 2008–2026</p>",
     unsafe_allow_html=True,
 )
@@ -77,11 +88,9 @@ if st.session_state.show_conscription_info:
         <p>Data was collected from official Russian presidential decrees on conscription, published annually. Each decree specifies the number of citizens to be called up for that cycle.</p>
         <br>
         <p><strong>Note on 2026</strong></p>
-        <p>The 2026 figure reflects Russia's first year-round conscription system, signed into law in November 2025 and effective January 2026. The figure of 261,000 represents the total planned quota under the new system.</p>
+        <p>The 2026 figure reflects Russia's first year-round conscription system, signed into law in November 2025 and effective January 2026. The total planned quota is 261,000 — shown as a single bar since the seasonal split no longer applies.</p>
     </div>
     """, unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
 
 years  = df["year_str"].tolist()
 spring = df["spring"].tolist()
@@ -90,20 +99,34 @@ total  = df["total"].tolist()
 
 fig = go.Figure()
 
+# Spring draft — all years except 2026
 fig.add_trace(go.Bar(
-    x=years, y=spring,
+    x=[y for y in years if y != "2026"],
+    y=[spring[i] for i, y in enumerate(years) if y != "2026"],
     name="Spring draft",
     marker_color="rgba(0,87,231,0.6)",
     hovertemplate="<b>%{x}</b><br>Spring draft: %{y:,.0f}<extra></extra>",
 ))
 
+# Autumn draft — all years except 2026
 fig.add_trace(go.Bar(
-    x=years, y=autumn,
+    x=[y for y in years if y != "2026"],
+    y=[autumn[i] for i, y in enumerate(years) if y != "2026"],
     name="Autumn draft",
     marker_color="rgba(0,87,231,0.35)",
     hovertemplate="<b>%{x}</b><br>Autumn draft: %{y:,.0f}<extra></extra>",
 ))
 
+# 2026 — total draft as single bar
+fig.add_trace(go.Bar(
+    x=["2026"],
+    y=[261000],
+    name="Total draft",
+    marker_color="rgba(0,87,231,0.5)",
+    hovertemplate="<b>2026</b><br>Total draft: 261,000<extra></extra>",
+))
+
+# Total line
 fig.add_trace(go.Scatter(
     x=years, y=total,
     name="Total",
@@ -113,20 +136,21 @@ fig.add_trace(go.Scatter(
     hovertemplate="<b>%{x}</b><br>Total: %{y:,.0f}<extra></extra>",
 ))
 
+# Full-scale invasion line in red
 fig.add_shape(
     type="line",
     x0="2022", x1="2022",
-    y0=0, y1=620000,
-    line=dict(color="#aaaaaa", width=1, dash="dot"),
+    y0=0, y1=580000,
+    line=dict(color="#E8000D", width=1.5, dash="dot"),
 )
 fig.add_annotation(
-    x="2022", y=610000,
+    x="2022", y=590000,
     text="Full-scale invasion",
     showarrow=False,
     yanchor="bottom",
     xanchor="left",
     xshift=6,
-    font=dict(size=10, color="#aaaaaa", family="Inter"),
+    font=dict(size=10, color="#E8000D", family="Inter"),
     bgcolor="rgba(0,0,0,0)",
 )
 
@@ -164,8 +188,8 @@ fig.update_layout(
         font=dict(color="#ffffff", size=12, family="Inter"),
     ),
     hovermode="x unified",
-    margin=dict(t=20, b=100, l=70, r=20),
-    height=480,
+    margin=dict(t=10, b=100, l=70, r=20),
+    height=460,
 )
 
 st.plotly_chart(fig, width="stretch")
@@ -173,7 +197,7 @@ st.plotly_chart(fig, width="stretch")
 st.markdown(
     "<p style='font-size:10px;color:#444444;margin:4px 0;'>"
     "Source: Official Russian presidential conscription decrees · "
-    "Spring draft: April–July · Autumn draft: October–December</p>",
+    "Spring draft: April–July · Autumn draft: October–December · "
+    "2026: Year-round conscription system</p>",
     unsafe_allow_html=True,
 )
-
