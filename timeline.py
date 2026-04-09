@@ -56,7 +56,7 @@ events = [
         "date": "Feb 2022",
         "x": 2022.1,
         "short": "February 2022 — Full-scale invasion of Ukraine.",
-"context": "On February 24, 2022, Russia launched a large-scale military attack on Ukraine, marking the biggest armed conflict in Europe since World War II. The invasion involved ground, air and naval forces across multiple fronts.",
+"context": "On February 24, 2022, Russia launched a large-scale military attack on Ukraine — the biggest armed conflict in Europe since World War II.",
     },
     {
         "id": "E2",
