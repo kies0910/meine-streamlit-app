@@ -47,8 +47,16 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("Russian Asylum Applications to the EU")
-st.markdown("*Mean monthly asylum applications per country — men vs. women aged 18–34*")
+st.markdown(
+    "<h2 style='font-size:22px;font-weight:600;color:#ffffff;margin:16px 0 4px;'>"
+    "Did Russia's military recruitment changes drive men to flee?</h2>",
+    unsafe_allow_html=True,
+)
+st.markdown(
+    "<p style='color:#888888;font-size:12px;margin:0 0 12px;'>"
+    "Mean monthly asylum applications per country — men vs. women aged 18–34</p>",
+    unsafe_allow_html=True,
+)
 
 if "show_info" not in st.session_state:
     st.session_state.show_info = False
@@ -60,16 +68,16 @@ if st.session_state.show_info:
     st.markdown("""
     <div class="info-box">
         <p><strong>What are we looking at?</strong></p>
-        <p>This chart tracks the average number of monthly first-time asylum applications by Russian citizens aged 18–34, broken down by sex and EU country, from January 2017 to early 2026. We compare men and women to see whether Russian conscription policy drives male emigration.</p>
+        <p>This chart tracks the average number of monthly first-time asylum applications by Russian citizens aged 18–34, broken down by sex and EU country, from January 2017 to October 2025. We compare men (treatment group) and women (control group) to see whether key events and changes in Russia's military recruitment system drive emigration, measured here through asylum applications.</p>
         <br>
         <p><strong>How we measured it</strong></p>
-        <p>Each dot shows the average number of first-time asylum applications per sex, per EU country, per month. The solid line is a smoothed trend line — it averages each month with its neighboring months to reduce short-term spikes and make the overall pattern clearer. Data comes from Eurostat's monthly asylum applications database, filtered for Russian citizens aged 18–34, first-time applicants only, broken down by sex and receiving country.</p>
+        <p>Each dot shows the average number of first-time asylum applications per sex, per EU country, per month. The red and blue lines are smoothed trend lines. Data comes from Eurostat's monthly asylum applications database.</p>
         <br>
         <p><strong>Event markers (E1–E7)</strong></p>
-        <p>The dotted vertical lines mark seven key changes to Russia's military recruitment system since February 2022. Hover over a line to see the event name and a short description of what changed.</p>
+        <p>The dotted vertical lines mark seven key events and changes that affect Russia's military recruitment system since February 2022.</p>
         <br>
         <p><strong>Note</strong></p>
-        <p>Asylum is only one migration route. Men with more resources may have left via work or study permits.</p>
+        <p>Asylum applications are only one migration route. Men may have also left via residence permits. Our residence permit dataset covers this separately but is only available as annual data.</p>
     </div>
     """, unsafe_allow_html=True)
 
