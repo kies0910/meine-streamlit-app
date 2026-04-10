@@ -7,13 +7,10 @@ st.set_page_config(page_title="Russian Asylum Applications", layout="wide")
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
     * { font-family: 'Inter', sans-serif !important; }
-
     .stApp { background-color: #000000; color: #ffffff; }
     h1, h2, h3, h4 { color: #ffffff !important; }
     .stMarkdown, .stMarkdown p, .stMarkdown li { color: #ffffff !important; }
-
     .stButton > button {
         background-color: #000000 !important;
         color: #ffffff !important;
@@ -27,7 +24,6 @@ st.markdown("""
         border-color: #aaaaaa !important;
         color: #cccccc !important;
     }
-
     .info-box {
         background-color: #111111;
         border: 0.5px solid #555555;
@@ -41,9 +37,7 @@ st.markdown("""
         line-height: 1.7 !important;
         margin: 0.3rem 0 !important;
     }
-    .info-box strong {
-        color: #ffffff !important;
-    }
+    .info-box strong { color: #ffffff !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -54,7 +48,7 @@ st.markdown(
 )
 st.markdown(
     "<p style='color:#888888;font-size:12px;margin:0 0 12px;'>"
-    "Mean monthly asylum applications per country — men vs. women aged 18–34</p>",
+    "Mean monthly asylum applications per EU country — men vs. women aged 18–34</p>",
     unsafe_allow_html=True,
 )
 
@@ -71,21 +65,33 @@ if st.session_state.show_info:
         <p>This chart tracks the average number of monthly first-time asylum applications by Russian citizens aged 18–34, broken down by sex and EU country, from January 2017 to October 2025. We compare men (treatment group) and women (control group) to see whether key events and changes in Russia's military recruitment system drive emigration, measured here through asylum applications.</p>
         <br>
         <p><strong>How we measured it</strong></p>
-        <p>Each dot shows the average number of first-time asylum applications per sex, per EU country, per month. The red and blue lines are smoothed trend lines. Data comes from Eurostat's monthly asylum applications database.</p>
+        <p>Each dot shows the raw average number of first-time asylum applications per sex, per EU country, per month. The red and blue lines are smoothed trend lines — they average each month with its neighboring months to reduce short-term spikes and make the overall pattern clearer. When you hover over the line, you see the raw monthly average, the total number of applications across all EU countries that month, and the percentage change compared to the previous month. Data comes from Eurostat's monthly asylum applications database.</p>
         <br>
         <p><strong>Event markers (E1–E7)</strong></p>
-        <p>The dotted vertical lines mark seven key events and changes that affect Russia's military recruitment system since February 2022.</p>
+        <p>The dotted vertical lines mark seven key events and changes that affect Russia's military recruitment system since February 2022. Hover over a line to see the event name and a short description of what changed.</p>
         <br>
         <p><strong>Note</strong></p>
-        <p>Asylum applications are only one migration route. Men may have also left via residence permits. Our residence permit dataset covers this separately but is only available as annual data.</p>
+        <p>Asylum applications are only one migration route. Men may have also left via residence permits — our residence permit dataset covers this separately but is only available as annual data.</p>
     </div>
     """, unsafe_allow_html=True)
+
+EU_COUNTRIES = [
+    "Austria","Belgium","Bulgaria","Croatia","Cyprus","Czechia",
+    "Denmark","Estonia","Finland","France","Germany","Greece",
+    "Hungary","Ireland","Italy","Latvia","Lithuania","Luxembourg",
+    "Malta","Netherlands","Poland","Portugal","Romania",
+    "Slovakia","Slovenia","Spain","Sweden"
+]
 
 @st.cache_data
 def load_data():
     asylum = pd.read_csv("asylum.csv")
     asylum["OBS_VALUE"] = pd.to_numeric(asylum["OBS_VALUE"], errors="coerce")
     asylum = asylum.dropna(subset=["OBS_VALUE"])
+    # EU only
+    asylum = asylum[asylum["geo"].isin(EU_COUNTRIES)]
+
+    # Mean per country per month per sex
     monthly = (
         asylum.groupby(["TIME_PERIOD", "sex"])["OBS_VALUE"]
         .mean()
@@ -93,37 +99,63 @@ def load_data():
     )
     monthly.columns = ["month", "sex", "mean_apps"]
     monthly["month_dt"] = pd.to_datetime(monthly["month"])
+
+    # Total per month per sex
+    total = (
+        asylum.groupby(["TIME_PERIOD", "sex"])["OBS_VALUE"]
+        .sum()
+        .reset_index()
+    )
+    total.columns = ["month", "sex", "total"]
+    monthly = monthly.merge(total, on=["month", "sex"])
     return monthly
 
 data = load_data()
-men   = data[data["sex"] == "Males"].sort_values("month_dt")
-women = data[data["sex"] == "Females"].sort_values("month_dt")
+
+men   = data[data["sex"] == "Males"].sort_values("month_dt").reset_index(drop=True)
+women = data[data["sex"] == "Females"].sort_values("month_dt").reset_index(drop=True)
+
+# Smoothed lines
 men["smooth"]   = men["mean_apps"].rolling(3, center=True).mean()
 women["smooth"] = women["mean_apps"].rolling(3, center=True).mean()
 
+# Percentage change
+men["pct_change"]   = men["mean_apps"].pct_change() * 100
+women["pct_change"] = women["mean_apps"].pct_change() * 100
+
+# Hover text — raw + total + % change
+def make_hover(row):
+    pct = row["pct_change"]
+    pct_str = f"{pct:+.1f}%" if not pd.isna(pct) else "—"
+    return (
+        f"{row['month']}<br>"
+        f"<b>Mean: {row['mean_apps']:.1f}</b><br>"
+        f"Total: {int(row['total']):,}<br>"
+        f"Vs prev. month: {pct_str}"
+    )
+
+men["hover"]   = men.apply(make_hover, axis=1)
+women["hover"] = women.apply(make_hover, axis=1)
+
+# ── Events ─────────────────────────────────────────────────────────────────
 single_events = [
     ("2022-02-01", "E1", "E1: Full-scale invasion",
-     "February 2022 — Russia begins its full-scale invasion of Ukraine",
-     52, 0),
+     "February 2022 — Russia begins its full-scale invasion of Ukraine", 20, 0),
     ("2022-04-01", "E2", "E2: IT deferment",
-     "April 2022 — IT workers granted deferment from military service",
-     52, 0),
+     "April 2022 — IT workers granted deferment from military service", 20, 0),
     ("2023-04-01", "E5", "E5: Digital draft",
-     "April 2023 — Russia introduces digital draft notices.",
-     52, 0),
+     "April 2023 — Russia introduces digital draft notices.", 20, 0),
     ("2024-01-01", "E6", "E6: Age expansion",
-     "January 2024 — Upper conscription age expanded from 27 to 30 years",
-     52, 0),
+     "January 2024 — Upper conscription age expanded from 27 to 30 years", 20, 0),
     ("2025-09-01", "E7", "E7: Year-round conscription",
-     "Announced November 2025, effective January 2026 — Russia introduces year-round conscription processing.",
-     52, 0),
+     "Announced November 2025, effective January 2026 — Russia introduces year-round conscription processing.", 20, 0),
 ]
 
 combined_event = {
     "date": "2022-09-01",
     "short": "E3/E4",
     "hover": "E3: Mobilization<br>September 2022 — Partial mobilization announced. Around 300,000 reservists called up.<br><br>E4: Student deferment<br>September 2022 — University students granted temporary deferment from military service.",
-    "ann_y": 52,
+    "ann_y": 20,
 }
 
 MEN_COLOR   = "#E8000D"
@@ -134,6 +166,7 @@ GRID_COLOR  = "#333333"
 
 fig = go.Figure()
 
+# Raw dots — visual only, no hover
 fig.add_trace(go.Scatter(
     x=men["month_dt"], y=men["mean_apps"],
     mode="markers",
@@ -147,23 +180,27 @@ fig.add_trace(go.Scatter(
     showlegend=False, hoverinfo="skip",
 ))
 
+# Smoothed lines — hover shows raw + total + % change
 fig.add_trace(go.Scatter(
     x=men["month_dt"], y=men["smooth"],
     mode="lines", line=dict(color=MEN_COLOR, width=3),
     name="Men",
-    hovertemplate="%{x|%Y-%m}<br><b>Men: %{y:.1f}</b><extra></extra>",
+    text=men["hover"],
+    hovertemplate="%{text}<extra>Men</extra>",
 ))
 fig.add_trace(go.Scatter(
     x=women["month_dt"], y=women["smooth"],
     mode="lines", line=dict(color=WOMEN_COLOR, width=3),
     name="Women",
-    hovertemplate="%{x|%Y-%m}<br><b>Women: %{y:.1f}</b><extra></extra>",
+    text=women["hover"],
+    hovertemplate="%{text}<extra>Women</extra>",
 ))
 
+# Event lines
 for date_str, short, label, desc, ann_y, x_shift in single_events:
     dt = pd.to_datetime(date_str)
     fig.add_shape(
-        type="line", x0=dt, x1=dt, y0=0, y1=50,
+        type="line", x0=dt, x1=dt, y0=0, y1=20,
         line=dict(color=EVENT_COLOR, width=1.2, dash="dot"),
     )
     fig.add_annotation(
@@ -175,8 +212,7 @@ for date_str, short, label, desc, ann_y, x_shift in single_events:
         bordercolor=EVENT_COLOR, borderwidth=0.5, borderpad=3,
     )
     fig.add_trace(go.Scatter(
-        x=[dt, dt], y=[0, 50],
-        mode="lines",
+        x=[dt, dt], y=[0, 20], mode="lines",
         line=dict(color="rgba(0,0,0,0)", width=14),
         hovertemplate=f"<b>{label}</b><br>{desc}<extra></extra>",
         showlegend=False,
@@ -196,8 +232,7 @@ fig.add_annotation(
     bordercolor=EVENT_COLOR, borderwidth=0.5, borderpad=3,
 )
 fig.add_trace(go.Scatter(
-    x=[dt_combined, dt_combined], y=[0, 50],
-    mode="lines",
+    x=[dt_combined, dt_combined], y=[0, 50], mode="lines",
     line=dict(color="rgba(0,0,0,0)", width=14),
     hovertemplate=f"{combined_event['hover']}<extra></extra>",
     showlegend=False,
@@ -222,11 +257,11 @@ fig.update_layout(
         showline=False,
     ),
     yaxis=dict(
-        title="Mean monthly asylum applications per country",
+        title="Mean monthly asylum applications per EU country",
         title_font=dict(color="#ffffff", family="Inter"),
         tickfont=dict(color="#ffffff", family="Inter"),
         showgrid=True, gridcolor=GRID_COLOR,
-        range=[0, 58],
+        range=[0, 22],
         showline=False,
     ),
     legend=dict(
