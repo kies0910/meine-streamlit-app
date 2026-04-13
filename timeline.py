@@ -37,6 +37,7 @@ st.markdown("""
         line-height: 1.7 !important;
         margin: 0.3rem 0 !important;
     }
+    .info-box strong { color: #ffffff !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -56,49 +57,88 @@ events = [
         "date": "Feb 2022",
         "x": 2022.1,
         "short": "February 2022 — Full-scale invasion of Ukraine.",
-"context": "On February 24, 2022, Russia launched a large-scale military attack on Ukraine — the biggest armed conflict in Europe since World War II.",
+        "context": (
+            "On 24 February 2022, Russia launched a full-scale invasion of Ukraine. "
+            "This followed the recognition of the self-proclaimed 'DPR' and 'LPR' on 21 February "
+            "and the deployment of Russian troops under the label of a 'special military operation.' "
+            "This event marked a major political and demographic turning point, significantly increasing "
+            "the perceived risk of mobilization and triggering a wave of emigration from Russia."
+        ),
     },
     {
         "id": "E2",
         "date": "Apr 2022",
         "x": 2022.32,
         "short": "April 2022 — Introduction of IT-sector conscription deferments.",
-        "context": "Designed to prevent brain drain after an estimated 100,000 tech workers fled Russia in early 2022.",
+        "context": (
+            "In spring 2022, the Russian government introduced conscription deferments for certain "
+            "employees of accredited IT companies. The key legal basis was a government decree adopted "
+            "on 28 March 2022. The policy aimed to retain highly skilled workers and curb the outflow "
+            "of IT specialists following the outbreak of the war. Eligibility was limited to those "
+            "meeting specific criteria related to age, education, and employment in accredited firms."
+        ),
     },
     {
         "id": "E3",
         "date": "Sep 2022",
         "x": 2022.72,
         "short": "September 2022 — Announcement of partial mobilization.",
-        "context": "Around 300,000 reservists called up. Triggered the largest emigration wave — up to 700,000 men fled Russia within weeks.",
+        "context": (
+            "On 21 September 2022, President Vladimir Putin announced a partial mobilization and signed "
+            "the corresponding decree. Officially framed as recruiting reservists with prior military "
+            "experience, in practice the announcement dramatically increased uncertainty and fear among "
+            "men of conscription age, leading to a sharp rise in emigration from Russia in the following weeks."
+        ),
     },
     {
         "id": "E4",
         "date": "Sep 2022",
         "x": 2022.9,
         "short": "September 2022 — Expansion of student conscription deferments.",
-        "context": "University students granted temporary deferment. Applies only to full-time students — recent graduates remained vulnerable.",
+        "context": (
+            "On 24 September 2022, a decree granted deferments to students enrolled in full-time or "
+            "part-time programs who were obtaining their education level for the first time. Initially "
+            "covering a limited set of categories, the measure was later expanded in October to include "
+            "additional groups such as certain postgraduate students and students in accredited private institutions."
+        ),
     },
     {
         "id": "E5",
         "date": "Apr 2023",
         "x": 2023.3,
         "short": "April 2023 — Introduction of digital draft and electronic summons.",
-        "context": "A notice is legally delivered even if never opened. Ignoring it triggers travel bans and financial restrictions.",
+        "context": (
+            "Russia adopted legislation reforming the military registration and conscription system. "
+            "The law introduced a unified digital register of persons liable for military service and "
+            "legalized electronic draft notices. Crucially, a summons could now be considered legally "
+            "delivered without personal receipt, once it appeared in the official registry. "
+            "The reform also introduced penalties for non-compliance, including travel restrictions."
+        ),
     },
     {
         "id": "E6",
         "date": "Jan 2024",
         "x": 2024.0,
         "short": "January 2024 — Increase of conscription age limit to 30.",
-        "context": "Upper age expanded from 27 to 30, adding hundreds of thousands of men to the draft register.",
+        "context": (
+            "Russia raised the upper age limit for compulsory military service from 27 to 30 years. "
+            "The law was signed on 4 August 2023 and entered into force on 1 January 2024. "
+            "Despite earlier discussions, the lower bound remained unchanged at 18 years. "
+            "This reform expanded the pool of men eligible for conscription."
+        ),
     },
     {
         "id": "E7",
         "date": "Nov 2025",
         "x": 2025.85,
         "short": "Announced November 2025, effective January 2026 — Introduction of year-round conscription system.",
-        "context": "Draft boards, medical exams and screenings now operate continuously throughout the year.",
+        "context": (
+            "Russia adopted a law transitioning to a de facto year-round conscription system. "
+            "The law was published on 4 November 2025 and came into force on 1 January 2026. "
+            "Key procedures such as medical examinations, psychological screening, and draft commission "
+            "decisions can now take place throughout the entire year. This reform reduces the previous "
+            "seasonality of conscription pressure and makes the system more continuous and less predictable."
+        ),
     },
 ]
 
@@ -124,11 +164,10 @@ if st.session_state.show_timeline_info:
     st.markdown("""
     <div class="info-box">
         <p><strong>What are we looking at?</strong></p>
-        <p>This timeline shows seven key events and policy changes to Russia's military conscription system since the full-scale invasion of Ukraine in February 2022. The events include both major political turning points — such as the invasion itself and the partial mobilization — and specific legal reforms to the conscription system.</p>
+        <p>The timeline shows seven key events and policy changes in Russia's military conscription system since the full-scale invasion of Ukraine in February 2022. The events include major political turning points and specific legal reforms affecting men's obligation to serve.</p>
         <br>
-        <p><strong>How we built this dataset</strong></p>
-        <p>We identified and selected these seven events ourselves based on a systematic review of official Russian legislation, presidential decrees and news sources. Our selection criteria focused on changes that directly affected the legal obligation of men to serve — either by expanding who is eligible, making it harder to avoid a summons, or removing existing exemptions. We then coded each event as a binary variable (0 before, 1 after) to use in our statistical analysis. This self-constructed events dataset allowed us to test whether specific policy changes are associated with increases in asylum applications by Russian men of conscription age in the EU.</p>
-        
+        <p><strong>How did we build the dataset?</strong></p>
+        <p>We identified and selected these seven events ourselves based on a systematic review of official Russian legislation, presidential decrees and news sources. Our selection focused on changes that directly affected the legal obligation of men to serve. We then coded each event as a binary variable (0 before, 1 after) to use in our statistical analysis.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -149,10 +188,7 @@ anchor      = ["bottom", "top", "bottom", "top", "bottom", "top", "bottom"]
 for i, ev in enumerate(events):
     y_pos = y_positions[i]
     col   = RED_SHADES[i]
-    hover = (
-        f"<b>{ev['id']}: {ev['short']}</b><br><br>"
-        f"<i>{ev['context']}</i>"
-    )
+    hover = f"<b>{ev['id']}: {ev['short']}</b><br><br><i>{ev['context']}</i>"
 
     fig.add_shape(
         type="line",
