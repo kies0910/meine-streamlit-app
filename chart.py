@@ -61,14 +61,17 @@ if st.button("About the data"):
 if st.session_state.show_info:
     st.markdown("""
     <div class="info-box">
-        <p><strong>What are we looking at?</strong></p>
-        <p>This chart tracks the average number of monthly first-time asylum applications by Russian citizens aged 18–34, broken down by sex and EU country, from January 2017 to October 2025. We compare men (treatment group) and women (control group) to see whether key events and changes in Russia's military recruitment system drive emigration, measured here through asylum applications. Each dot shows the raw average number. The red and blue lines are smoothed trend lines. When you hover over the line, you see the raw monthly average, the total number of applications across all EU countries that month, and the percentage change compared to the previous month. Data comes from Eurostat's monthly asylum applications database.</p>
+        <p><strong>What are we looking at</strong></p>
+        <p>This chart tracks the average number of monthly first-time asylum applications by Russian citizens aged 18–34, broken down by sex and EU country, from January 2017 to October 2025. We compare men (treatment group) and women (control group) to see whether key events and changes in Russia's military recruitment system drive emigration, measured here through asylum applications.</p>
+        <br>
+        <p><strong>How did we measure migration patterns</strong></p>
+        <p>We calculated the average number of first-time asylum applications per month, sex, and EU country using Eurostat's monthly asylum database. Using a per-country average rather than raw totals prevents larger destination countries such as Germany and France from dominating the results. Each dot shows the raw monthly average. The red and blue lines are smoothed trend lines. When you hover over the line, you see the raw monthly average, the total number of applications across all EU countries that month, and the percentage change compared to the previous month.</p>
         <br>
         <p><strong>Event markers (E1–E7)</strong></p>
-        <p>The dotted vertical lines mark seven key events and changes that affect Russia's military recruitment system since February 2022. Hover over a line to see the event name and a short description of what changed.</p>
+        <p>The dotted vertical lines mark seven key events and changes that affect Russia's military recruitment system since February 2022. Hover over a line to see the event name and a short description.</p>
         <br>
         <p><strong>Note</strong></p>
-        <p>Asylum applications are only one migration route. Men may have also left via residence permits — our residence permit dataset covers this separately but is only available as annual data.</p>
+        <p>Asylum applications are only one migration route. Men may have also left via residence permits. Our residence permit dataset covers this separately but is only available as annual data.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -123,11 +126,10 @@ def make_hover(row):
 men["hover"]   = men.apply(make_hover, axis=1)
 women["hover"] = women.apply(make_hover, axis=1)
 
-# ── Events ─────────────────────────────────────────────────────────────────
-YMAX    = 20   # axis max
-LINE_Y  = 18   # dotted line height
-ANN_Y   = 18   # label height
-HOV_Y   = 18   # hover marker midpoint
+YMAX    = 20
+LINE_Y  = 18
+ANN_Y   = 18
+HOV_Y   = 18
 
 single_events = [
     ("2022-02-01", "E1", "E1: Full-scale invasion",
@@ -161,7 +163,6 @@ GRID_COLOR  = "#333333"
 
 fig = go.Figure()
 
-# Raw dots
 fig.add_trace(go.Scatter(
     x=men["month_dt"], y=men["mean_apps"],
     mode="markers",
@@ -175,7 +176,6 @@ fig.add_trace(go.Scatter(
     showlegend=False, hoverinfo="skip",
 ))
 
-# Smoothed lines
 fig.add_trace(go.Scatter(
     x=men["month_dt"], y=men["smooth"],
     mode="lines", line=dict(color=MEN_COLOR, width=3),
@@ -191,7 +191,6 @@ fig.add_trace(go.Scatter(
     hovertemplate="%{text}<extra>Women</extra>",
 ))
 
-# Single event lines
 for date_str, short, label, desc in single_events:
     dt = pd.to_datetime(date_str)
     fig.add_shape(
@@ -206,7 +205,6 @@ for date_str, short, label, desc in single_events:
         bgcolor="rgba(0,0,0,0.7)",
         bordercolor=EVENT_COLOR, borderwidth=0.5, borderpad=3,
     )
-    # Wide invisible hover marker at midpoint
     fig.add_trace(go.Scatter(
         x=[dt], y=[HOV_Y],
         mode="markers",
@@ -215,7 +213,6 @@ for date_str, short, label, desc in single_events:
         showlegend=False,
     ))
 
-# Combined E3/E4
 dt_c = pd.to_datetime(combined_event["date"])
 fig.add_shape(
     type="line", x0=dt_c, x1=dt_c, y0=0, y1=LINE_Y,
@@ -275,3 +272,10 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, width="stretch")
+
+st.markdown(
+    "<p style='font-size:10px;color:#888888;margin:4px 0;'>"
+    "Source: Eurostat · Asylum applications (first-time, men aged 18–34) · "
+    "Events dataset self-constructed by the authors.</p>",
+    unsafe_allow_html=True,
+)
