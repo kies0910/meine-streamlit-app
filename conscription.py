@@ -11,9 +11,8 @@ st.markdown("""
     .stApp { background-color: #000000; color: #ffffff; }
     h1, h2, h3, h4 { color: #ffffff !important; }
     .stMarkdown, .stMarkdown p, .stMarkdown li { color: #ffffff !important; }
-    .block-container { padding: 0rem 2rem !important; margin-top: 0 !important; }
-[data-testid="stAppViewContainer"] { padding-top: 0 !important; }
-[data-testid="stHeader"] { display: none !important; }
+    .block-container { padding: 0rem 2rem !important; }
+    [data-testid="stHeader"] { display: none !important; }
     .stButton > button {
         background-color: #000000 !important;
         color: #aaaaaa !important;
@@ -40,6 +39,7 @@ st.markdown("""
         line-height: 1.7 !important;
         margin: 0.3rem 0 !important;
     }
+    .info-box strong { color: #ffffff !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -62,7 +62,7 @@ df = load_data()
 
 # ── Title ──────────────────────────────────────────────────────────────────
 st.markdown(
-    "<h2 style='font-size:22px;font-weight:600;color:#ffffff;margin:0 0 4px;'>"
+    "<h2 style='font-size:22px;font-weight:600;color:#ffffff;margin:16px 0 4px;'>"
     "How many Russian men were conscripted each year?</h2>",
     unsafe_allow_html=True,
 )
@@ -82,15 +82,14 @@ if st.session_state.show_conscription_info:
     st.markdown("""
     <div class="info-box">
         <p><strong>What are we looking at?</strong></p>
-        <p>This chart shows Russia's annual military conscription quotas — the number of men called up for mandatory military service each year. Russia conducts two conscription cycles per year: a spring draft (April–July) and an autumn draft (October–December).</p>
+        <p>The chart shows Russia's annual military conscription quotas from 2008 to 2026; the number of men called up for mandatory military service each year during the two conscription cycles: spring draft (April–July) and autumn draft (October–December).</p>
         <br>
-        <p><strong>Data source</strong></p>
-        <p>Data was collected from official Russian presidential decrees on conscription, published annually. Each decree specifies the number of citizens to be called up for that cycle.</p>
-        <br>
-        <p><strong>Note on 2026</strong></p>
-        <p>The 2026 figure reflects Russia's first year-round conscription system, signed into law in November 2025 and effective January 2026. The total planned quota is 261,000 — shown as a single bar since the seasonal split no longer applies.</p>
+        <p><strong>Source</strong></p>
+        <p>Data was collected from official Russian presidential decrees on conscription, published biannually. Each decree specifies the number of citizens to be called up for each cycle. Note that in 2026 the figure reflects Russia's first year-round conscription system, effective as of January 2026. The total planned quota is 261,000, shown as a single bar since the seasonal split no longer applies.</p>
     </div>
     """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 years  = df["year_str"].tolist()
 spring = df["spring"].tolist()
@@ -99,7 +98,6 @@ total  = df["total"].tolist()
 
 fig = go.Figure()
 
-# Spring draft — all years except 2026
 fig.add_trace(go.Bar(
     x=[y for y in years if y != "2026"],
     y=[spring[i] for i, y in enumerate(years) if y != "2026"],
@@ -108,7 +106,6 @@ fig.add_trace(go.Bar(
     hovertemplate="<b>%{x}</b><br>Spring draft: %{y:,.0f}<extra></extra>",
 ))
 
-# Autumn draft — all years except 2026
 fig.add_trace(go.Bar(
     x=[y for y in years if y != "2026"],
     y=[autumn[i] for i, y in enumerate(years) if y != "2026"],
@@ -117,7 +114,6 @@ fig.add_trace(go.Bar(
     hovertemplate="<b>%{x}</b><br>Autumn draft: %{y:,.0f}<extra></extra>",
 ))
 
-# 2026 — total draft as single bar
 fig.add_trace(go.Bar(
     x=["2026"],
     y=[261000],
@@ -126,7 +122,6 @@ fig.add_trace(go.Bar(
     hovertemplate="<b>2026</b><br>Total draft: 261,000<extra></extra>",
 ))
 
-# Total line
 fig.add_trace(go.Scatter(
     x=years, y=total,
     name="Total",
@@ -136,7 +131,6 @@ fig.add_trace(go.Scatter(
     hovertemplate="<b>%{x}</b><br>Total: %{y:,.0f}<extra></extra>",
 ))
 
-# Full-scale invasion line in red
 fig.add_shape(
     type="line",
     x0="2022", x1="2022",
@@ -188,16 +182,15 @@ fig.update_layout(
         font=dict(color="#ffffff", size=12, family="Inter"),
     ),
     hovermode="x unified",
-    margin=dict(t=10, b=100, l=70, r=20),
-    height=460,
+    margin=dict(t=20, b=100, l=70, r=20),
+    height=480,
 )
 
 st.plotly_chart(fig, width="stretch")
 
 st.markdown(
-    "<p style='font-size:10px;color:#444444;margin:4px 0;'>"
-    "Source: Official Russian presidential conscription decrees · "
-    "Spring draft: April–July · Autumn draft: October–December · "
-    "2026: Year-round conscription system</p>",
+    "<p style='font-size:11px;color:#888888;margin:4px 0;'>"
+    "Source: Official Presidential Decree on the conscription of citizens for the military service "
+    "(March 31, 2022 and September 30, 2022)</p>",
     unsafe_allow_html=True,
 )
